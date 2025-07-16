@@ -16,7 +16,7 @@ pub enum BitcoinError {
 impl CompactSize {
     pub fn new(value: u64) -> Self {
         // TODO: Construct a CompactSize from a u64 value
-        Self{value}
+        Self { value }
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
@@ -39,7 +39,7 @@ impl CompactSize {
             }
             _ => {
                 let mut bytes = vec![0xFF];
-                bytes.extend_from_slice (&self.value.to_le_bytes());
+                bytes.extend_from_slice(&self.value.to_le_bytes());
                 bytes
             }
         }
@@ -73,8 +73,7 @@ impl CompactSize {
                     return Err(BitcoinError::InsufficientBytes);
                 }
                 let val = u64::from_le_bytes([
-                    bytes[1], bytes[2], bytes[3], bytes[4],
-                    bytes[5], bytes[6], bytes[7], bytes[8],
+                    bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7], bytes[8],
                 ]);
                 Ok((CompactSize::new(val), 9))
             }
@@ -157,7 +156,7 @@ pub struct Script {
 impl Script {
     pub fn new(bytes: Vec<u8>) -> Self {
         // TODO: Simple constructor
-            Self{bytes}
+        Self { bytes }
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
@@ -203,7 +202,6 @@ impl TransactionInput {
             script_sig,
             sequence,
         }
-        
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
@@ -219,7 +217,7 @@ impl TransactionInput {
         // - OutPoint (36 bytes)
         // - Script (with CompactSize)
         // - Sequence (4 bytes)
-        let (outpoint,use1) = OutPoint::from_bytes(bytes)?;
+        let (outpoint, use1) = OutPoint::from_bytes(bytes)?;
         let (script, use2) = Script::from_bytes(&bytes[use1..])?;
         if bytes.len() < use1 + use2 + 4 {
             return Err(BitcoinError::InsufficientBytes);
@@ -230,11 +228,14 @@ impl TransactionInput {
             bytes[use1 + use2 + 2],
             bytes[use1 + use2 + 3],
         ]);
-        Ok((TransactionInput {
-            previous_output: outpoint,
-            script_sig: script,
-            sequence,
-        }, use1 + use2 + 4))
+        Ok((
+            TransactionInput {
+                previous_output: outpoint,
+                script_sig: script,
+                sequence,
+            },
+            use1 + use2 + 4,
+        ))
     }
 }
 
@@ -295,11 +296,14 @@ impl BitcoinTransaction {
             bytes[offset + 2],
             bytes[offset + 3],
         ]);
-        Ok((BitcoinTransaction {
-            version,
-            inputs,
-            lock_time,
-        }, offset + 4))
+        Ok((
+            BitcoinTransaction {
+                version,
+                inputs,
+                lock_time,
+            },
+            offset + 4,
+        ))
     }
 }
 
@@ -307,18 +311,25 @@ impl fmt::Display for BitcoinTransaction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // TODO: Format a user-friendly string showing version, inputs, lock_time
         // Display scriptSig length and bytes, and previous output info
-        writeln!(f, "Version: {}", self.version)?; 
+        writeln!(f, "Version: {}", self.version)?;
         for (i, input) in self.inputs.iter().enumerate() {
-            writeln!(f, "Input #{}:",i)?;
-            writeln!(f, "  Previous Output Txid: {}",
-                hex::encode(input.previous_output.txid.0))?;
+            writeln!(f, "Input #{}:", i)?;
+            writeln!(
+                f,
+                "  Previous Output Txid: {}",
+                hex::encode(input.previous_output.txid.0)
+            )?;
             writeln!(f, "  Previous Output Vout: {}", input.previous_output.vout)?;
-            writeln!(f, "  ScriptSig (len={}): {}", input.script_sig.bytes.len(),hex::encode(&input.script_sig.bytes))?;
+            writeln!(
+                f,
+                "  ScriptSig (len={}): {}",
+                input.script_sig.bytes.len(),
+                hex::encode(&input.script_sig.bytes)
+            )?;
 
             writeln!(f, "  Sequence: 0x{:08X}", input.sequence)?;
         }
         writeln!(f, "Lock Time: {}", self.lock_time)?;
         Ok(())
-    
     }
 }
